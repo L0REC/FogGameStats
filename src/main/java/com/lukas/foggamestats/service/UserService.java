@@ -18,4 +18,8 @@ public class UserService {
 	public Optional<User> findUserBySteamId(String steamId) {
 		return userRepository.findBySteamId(steamId);
 	}
+	
+	public User saveUser(User user) {
+		return userRepository.save(user);
+	}
 }

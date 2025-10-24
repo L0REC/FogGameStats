@@ -23,4 +23,8 @@ public class GameService {
 	public List<Game> findGamesByNameContaining(String name) {
 		return gameRepository.findByNameContaining(name);
 	}
+	
+	public Game saveGame(Game game) {
+		return gameRepository.save(game);
+	}
 }
