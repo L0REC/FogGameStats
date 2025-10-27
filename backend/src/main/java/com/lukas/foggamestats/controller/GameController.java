@@ -38,4 +38,10 @@ public class GameController {
 		List<Game> games = gameService.findGamesByNameContaining(name);
 		return ResponseEntity.ok(games);
 	}
+	
+	@GetMapping
+	public ResponseEntity<List<Game>> getAllGames() {
+		List<Game> games = gameService.getAllGames();
+		return ResponseEntity.ok(games);
+	}
 }

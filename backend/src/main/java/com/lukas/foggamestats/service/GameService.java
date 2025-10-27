@@ -24,6 +24,10 @@ public class GameService {
 		return gameRepository.findByNameContaining(name);
 	}
 	
+	public List<Game> getAllGames() {
+		return gameRepository.findAll();
+	}
+	
 	public Game saveGame(Game game) {
 		return gameRepository.save(game);
 	}
