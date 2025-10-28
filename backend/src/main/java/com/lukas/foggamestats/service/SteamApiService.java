@@ -1,7 +1,6 @@
 package com.lukas.foggamestats.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -62,62 +61,52 @@ public class SteamApiService {
 	}
 
 	public User syncUserData(String steamId) {
-
 		SteamPlayerSummaryWrapperDto summaryWrapper = fetchPlayerSummary(steamId);
 		SteamPlayerDto steamPlayer = summaryWrapper.getResponse().getPlayers().get(0);
 
-		Optional<User> existingUser = userService.findUserBySteamId(steamId);
-
-		User user;
-		if (existingUser.isPresent()) {
-			user = existingUser.get();
-			user.setUsername(steamPlayer.getPersonaName());
-			user.setAvatarUrl(steamPlayer.getAvatarFull());
-		} else {
-			user = new User();
-			user.setSteamId(steamId);
-			user.setUsername(steamPlayer.getPersonaName());
-			user.setAvatarUrl(steamPlayer.getAvatarFull());
-		}
-
+		User user = userService.findUserBySteamId(steamId)
+				.orElse(new User());
+		user.setSteamId(steamId);
+		user.setUsername(steamPlayer.getPersonaName());
+		user.setAvatarUrl(steamPlayer.getAvatarFull());
 		user = userService.saveUser(user);
 
 		SteamOwnedGamesWrapperDto gamesWrapper = fetchOwnedGames(steamId);
 		List<SteamGameDto> steamGames = gamesWrapper.getResponse().getGames();
 
 		for (SteamGameDto steamGame : steamGames) {
-			Optional<Game> existingGame = gameService.findGameByAppId(steamGame.getAppId());
-			Game game;
-			if (existingGame.isPresent()) {
-				game = existingGame.get();
-				game.setName(steamGame.getName());
-				game.setHeaderImage(
-						"https://cdn.cloudflare.steamstatic.com/steam/apps/" + steamGame.getAppId() + "/header.jpg");
-				game = gameService.saveGame(game);
-			} else {
-				game = new Game();
-				game.setAppId(steamGame.getAppId());
-				game.setName(steamGame.getName());
-				game.setHeaderImage(
-						"https://cdn.cloudflare.steamstatic.com/steam/apps/" + steamGame.getAppId() + "/header.jpg");
-				game = gameService.saveGame(game);
-			}
 
-			Optional<PlaytimeRecord> existingRecord = playtimeRecordService.findByUserAndGame(user, game);
-			
-			PlaytimeRecord record;
-			if (existingRecord.isPresent()) {
-				record = existingRecord.get();
-				record.setTotalMinutesPlayed(steamGame.getPlaytimeForever());
-			} else {
-				record = new PlaytimeRecord();
-				record.setUser(user);
-				record.setGame(game);
-				record.setTotalMinutesPlayed(steamGame.getPlaytimeForever());
-			}
-			
-			playtimeRecordService.saveRecord(record);
+			Game game = upsertGame(steamGame);
+
+			upsertPlaytimeRecord(user, game, steamGame.getPlaytimeForever());
 		}
+
 		return user;
+	}
+
+	private Game upsertGame(SteamGameDto steamGame) {
+		Game game = gameService.findGameByAppId(steamGame.getAppId())
+				.orElse(new Game());
+
+		if (game.getAppId() == null) {
+			game.setAppId(steamGame.getAppId());
+		}
+
+		game.setName(steamGame.getName());
+		game.setHeaderImage(
+				"https://cdn.cloudflare.steamstatic.com/steam/apps/"
+						+ steamGame.getAppId() + "/header.jpg");
+
+		return gameService.saveGame(game);
+	}
+
+	private void upsertPlaytimeRecord(User user, Game game, Integer playtimeMinutes) {
+		PlaytimeRecord record = playtimeRecordService.findByUserAndGame(user, game)
+				.orElse(new PlaytimeRecord());
+
+		record.setUser(user);
+		record.setGame(game);
+		record.setTotalMinutesPlayed(playtimeMinutes);
+		playtimeRecordService.saveRecord(record);
 	}
 }
