@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { gameAPI } from "../services/api";
 import { useSearchParams } from "react-router-dom";
 
@@ -10,34 +10,45 @@ function Dashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [steamId, setSteamId] = useState(searchParams.get("steamId") || "");
 
-  const fetchGames = useCallback(async () => {
-    if (!steamId.trim()) {
-      setGames([]);
-      setLoading(false);
-      return;
-    }
+  useEffect(() => {
+    const loadGames = async () => {
+      if (!steamId.trim()) {
+        setGames([]);
+        setLoading(false);
+        return;
+      }
 
-    try {
-      setLoading(true);
-      const response = await gameAPI.getPlaytimeForUser(steamId);
+      try {
+        setLoading(true);
+        const response = await gameAPI.getPlaytimeForUser(steamId);
 
-      const gamesWithPlaytime = response.data.map((record) => ({
-        id: record.game.id,
-        appId: record.game.appId,
-        name: record.game.name,
-        headerImage: record.game.headerImage,
-        playtimeForever: record.totalMinutesPlayed,
-        playtime2Weeks: 0,
-      }));
+        const gamesWithPlaytime = response.data.map((record) => ({
+          id: record.game.id,
+          appId: record.game.appId,
+          name: record.game.name,
+          headerImage: record.game.headerImage,
+          playtimeForever: record.totalMinutesPlayed,
+          playtime2Weeks: 0,
+        }));
 
-      setGames(gamesWithPlaytime);
-      setError(null);
-    } catch (err) {
-      setError("ゲームの読み込みに失敗しました。");
-      console.error("Error fetching games:", err);
-    } finally {
-      setLoading(false);
-    }
+        setGames(gamesWithPlaytime);
+        setError(null);
+      } catch (err) {
+        if (err.response?.status === 404) {
+          setError(
+            "このユーザーのデータがありません。同期ボタンを押してください。"
+          );
+          setGames([]);
+        } else {
+          setError("ゲームの読み込みに失敗しました。");
+        }
+        console.error("Error fetching games:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadGames();
   }, [steamId]);
 
   const handleSync = async () => {
@@ -49,7 +60,8 @@ function Dashboard() {
     try {
       setSyncing(true);
       await gameAPI.syncGames(steamId);
-      await fetchGames();
+      setSearchParams({ steamId });
+
       alert("ゲームの同期が完了しました！");
     } catch (err) {
       alert("同期に失敗しました: " + err.message);
