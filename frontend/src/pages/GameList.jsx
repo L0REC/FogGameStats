@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { gameAPI } from "../services/api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 function GameList() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [steamId] = useState("76561198014322899"); // Use same default Steam ID
+  const [searchParams] = useSearchParams();
+  const steamId = searchParams.get("steamId") || "";
   const navigate = useNavigate();
 
   const fetchGames = useCallback(async () => {
@@ -56,7 +57,7 @@ function GameList() {
           <div
             key={game.id}
             className="game-card"
-            onClick={() => navigate(`/games/${game.id}`)}
+            onClick={() => navigate(`/games/${game.id}?steamId=${steamId}`)}
           >
             <img
               src={game.headerImage}

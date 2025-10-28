@@ -1,12 +1,14 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { gameAPI } from "../services/api";
+import { useSearchParams } from "react-router-dom";
 
 function Dashboard() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [syncing, setSyncing] = useState(false);
-  const [steamId, setSteamId] = useState("76561198014322899");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [steamId, setSteamId] = useState(searchParams.get("steamId") || "");
 
   const fetchGames = useCallback(async () => {
     if (!steamId.trim()) {
@@ -37,10 +39,6 @@ function Dashboard() {
       setLoading(false);
     }
   }, [steamId]);
-
-  useEffect(() => {
-    fetchGames();
-  }, [fetchGames]);
 
   const handleSync = async () => {
     if (!steamId.trim()) {
@@ -81,7 +79,15 @@ function Dashboard() {
             type="text"
             placeholder="Steam IDを入力"
             value={steamId}
-            onChange={(e) => setSteamId(e.target.value)}
+            onChange={(e) => {
+              const newSteamId = e.target.value;
+              setSteamId(newSteamId);
+              if (newSteamId) {
+                setSearchParams({ steamId: newSteamId });
+              } else {
+                setSearchParams({});
+              }
+            }}
             className="steam-id-input"
           />
           <button
