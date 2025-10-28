@@ -87,24 +87,35 @@ public class SteamApiService {
 
 		for (SteamGameDto steamGame : steamGames) {
 			Optional<Game> existingGame = gameService.findGameByAppId(steamGame.getAppId());
-
 			Game game;
 			if (existingGame.isPresent()) {
 				game = existingGame.get();
+				game.setName(steamGame.getName());
+				game.setHeaderImage(
+						"https://cdn.cloudflare.steamstatic.com/steam/apps/" + steamGame.getAppId() + "/header.jpg");
+				game = gameService.saveGame(game);
 			} else {
 				game = new Game();
 				game.setAppId(steamGame.getAppId());
 				game.setName(steamGame.getName());
 				game.setHeaderImage(
-						"https://cdn.cloudflare.steamstatic.com/steam/apps/" + steamGame.getAppId() + "header.jpg");
+						"https://cdn.cloudflare.steamstatic.com/steam/apps/" + steamGame.getAppId() + "/header.jpg");
 				game = gameService.saveGame(game);
 			}
 
-			PlaytimeRecord record = new PlaytimeRecord();
-			record.setUser(user);
-			record.setGame(game);
-			record.setTotalMinutesPlayed(steamGame.getPlaytimeForever());
-
+			Optional<PlaytimeRecord> existingRecord = playtimeRecordService.findByUserAndGame(user, game);
+			
+			PlaytimeRecord record;
+			if (existingRecord.isPresent()) {
+				record = existingRecord.get();
+				record.setTotalMinutesPlayed(steamGame.getPlaytimeForever());
+			} else {
+				record = new PlaytimeRecord();
+				record.setUser(user);
+				record.setGame(game);
+				record.setTotalMinutesPlayed(steamGame.getPlaytimeForever());
+			}
+			
 			playtimeRecordService.saveRecord(record);
 		}
 		return user;

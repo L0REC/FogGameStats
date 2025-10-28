@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { gameAPI } from "../services/api";
 import { useNavigate } from "react-router-dom";
 
@@ -6,22 +6,32 @@ function GameList() {
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [steamId] = useState("76561198014322899"); // Use same default Steam ID
   const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchGames();
-  }, []);
-
-  const fetchGames = async () => {
+  const fetchGames = useCallback(async () => {
     try {
-      const response = await gameAPI.getAllGames();
-      setGames(response.data);
+      const response = await gameAPI.getPlaytimeForUser(steamId);
+
+      const gamesWithPlaytime = response.data.map((record) => ({
+        id: record.game.id,
+        appId: record.game.appId,
+        name: record.game.name,
+        headerImage: record.game.headerImage,
+        playtimeForever: record.totalMinutesPlayed,
+      }));
+
+      setGames(gamesWithPlaytime);
     } catch (err) {
       console.error("Error fetching games:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [steamId]);
+
+  useEffect(() => {
+    fetchGames();
+  }, [fetchGames]);
 
   const filteredGames = games.filter((game) =>
     game.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -50,7 +60,7 @@ function GameList() {
           >
             <img
               src={game.headerImage}
-              alt={game.name}
+              alt="Game icon"
               onError={(e) => (e.target.src = "https://via.placeholder.com/64")}
             />
             <div className="game-info">

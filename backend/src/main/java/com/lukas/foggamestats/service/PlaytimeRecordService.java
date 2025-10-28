@@ -1,9 +1,11 @@
 package com.lukas.foggamestats.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.lukas.foggamestats.model.Game;
 import com.lukas.foggamestats.model.PlaytimeRecord;
 import com.lukas.foggamestats.model.User;
 import com.lukas.foggamestats.repository.PlaytimeRecordRepository;
@@ -22,5 +24,9 @@ public class PlaytimeRecordService {
 	
 	public PlaytimeRecord saveRecord(PlaytimeRecord record) {
 		return playtimeRecordRepository.save(record);
+	}
+	
+	public Optional<PlaytimeRecord> findByUserAndGame(User user, Game game) {
+		return playtimeRecordRepository.findByUserAndGame(user, game);
 	}
 }
