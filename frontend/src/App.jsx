@@ -2,19 +2,14 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import GameList from "./pages/GameList";
 import GameDetail from "./pages/GameDetail";
+import Header from "./components/Header";
 import "./App.css";
 
 function App() {
   return (
     <Router>
       <div className="App">
-        <header className="app-header">
-          <h1>Fog Game Stats</h1>
-          <nav>
-            <a href="/">ダッシュボード</a>
-            <a href="/games">ゲーム一覧</a>
-          </nav>
-        </header>
+        <Header />
 
         <main className="app-main">
           <Routes>
