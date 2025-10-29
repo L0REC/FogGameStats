@@ -1,7 +1,7 @@
 package com.lukas.foggamestats.controller;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,14 +23,10 @@ public class GameController {
 	private final GameService gameService;
 
 	@GetMapping("/{appId}")
-	public ResponseEntity<Game> getGameByAppId(@PathVariable Integer appId) {
-		Optional<Game> game = gameService.findGameByAppId(appId);
-
-		if (game.isPresent()) {
-			return ResponseEntity.ok(game.get());
-		} else {
-			return ResponseEntity.notFound().build();
-		}
+	public ResponseEntity<Game> getGameById(@PathVariable UUID id) {
+		return gameService.findGameById(id)
+				.map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
 	}
 
 	@GetMapping("/search")

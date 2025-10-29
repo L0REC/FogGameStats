@@ -1,37 +1,50 @@
 import { useState, useEffect } from "react";
 import { gameAPI } from "../services/api";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 
 function GameDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [game, setGame] = useState(null);
+  const [searchParams] = useSearchParams();
+  const steamId = searchParams.get("steamId") || "";
+  const [playtimeRecord, setPlaytimeRecord] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchGame = async () => {
+    const fetchGameDetails = async () => {
+      if (!steamId) {
+        console.error("No Steam ID provided");
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await gameAPI.getGameById(id);
-        setGame(response.data);
+        console.log("Fetching playtime for steamId:", steamId, "gameId:", id);
+        const response = await gameAPI.getPlaytimeForGame(steamId, id);
+        setPlaytimeRecord(response.data);
       } catch (err) {
-        console.error("Error fetching game:", err);
+        console.error("Error fetching game details:", err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchGame();
-  }, [id]);
+    fetchGameDetails();
+  }, [id, steamId]);
 
   if (loading) return <div className="loading">ゲーム詳細を読み込み中...</div>;
-  if (!game) return <div className="error">ゲームが見つかりません</div>;
+  if (!playtimeRecord)
+    return <div className="error">ゲームが見つかりません</div>;
 
-  const totalHours = Math.floor((game.playtimeForever || 0) / 60);
-  const recentHours = Math.floor((game.playtime2Weeks || 0) / 60);
+  const game = playtimeRecord.game;
+  const totalHours = Math.floor((playtimeRecord.totalMinutesPlayed || 0) / 60);
 
   return (
     <div className="game-detail">
-      <button onClick={() => navigate("/games")} className="back-button">
+      <button
+        onClick={() => navigate(`/games?steamId=${steamId}`)}
+        className="back-button"
+      >
         ← ゲーム一覧に戻る
       </button>
 
@@ -55,18 +68,9 @@ function GameDetail() {
         </div>
 
         <div className="stat-card">
-          <h3>最近2週間</h3>
-          <p className="stat-number">{recentHours}時間</p>
-        </div>
-
-        <div className="stat-card">
-          <h3>最後にプレイ</h3>
+          <h3>記録日時</h3>
           <p className="stat-number">
-            {game.rtimeLastPlayed
-              ? new Date(game.rtimeLastPlayed * 1000).toLocaleDateString(
-                  "ja-JP"
-                )
-              : "未プレイ"}
+            {new Date(playtimeRecord.recordedAt).toLocaleDateString("ja-JP")}
           </p>
         </div>
       </div>

@@ -2,6 +2,7 @@ package com.lukas.foggamestats.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -28,5 +29,9 @@ public class PlaytimeRecordService {
 	
 	public Optional<PlaytimeRecord> findByUserAndGame(User user, Game game) {
 		return playtimeRecordRepository.findByUserAndGame(user, game);
+	}
+	
+	public Optional<PlaytimeRecord> getPlaytimeFromUserAndGame(String steamId, UUID gameId) {
+		return playtimeRecordRepository.findByUserSteamIdAndGameId(steamId, gameId);
 	}
 }
