@@ -2,6 +2,7 @@ package com.lukas.foggamestats.controller;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import jakarta.validation.Valid;
 
@@ -39,6 +40,16 @@ public class PlaytimeRecordController {
 		} else {
 			return ResponseEntity.notFound().build();
 		}
+	}
+	
+	@GetMapping("/user/{steamId}/game/{gameId}")
+	public ResponseEntity<PlaytimeRecord> getPlaytimeForGame(
+			@PathVariable String steamId,
+			@PathVariable UUID gameId
+	)  {
+		Optional<PlaytimeRecord> record = playtimeRecordService.getPlaytimeFromUserAndGame(steamId, gameId);
+		return record.map(ResponseEntity::ok)
+				.orElse(ResponseEntity.notFound().build());
 	}
 
 	@PostMapping

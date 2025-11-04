@@ -13,4 +13,5 @@ import com.lukas.foggamestats.model.User;
 public interface PlaytimeRecordRepository extends JpaRepository<PlaytimeRecord, UUID> {
 	List<PlaytimeRecord> findByUser(User user);
 	Optional<PlaytimeRecord> findByUserAndGame(User user, Game game);
+	Optional<PlaytimeRecord> findByUserSteamIdAndGameId(String steamId, UUID gameId);
 }

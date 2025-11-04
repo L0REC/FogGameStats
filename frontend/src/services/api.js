@@ -12,6 +12,8 @@ const api = axios.create({
 export const gameAPI = {
   getAllGames: () => api.get("/games"),
   getGameById: (id) => api.get(`/games/${id}`),
+  getPlaytimeForGame: (steamId, gameId) =>
+    api.get(`/playtime/user/${steamId}/game/${gameId}`),
   syncGames: (steamId) => api.post(`/sync/user/${steamId}`),
   getGameStats: (gameId) => api.get(`/games/${gameId}/stats`),
   getPlaytimeForUser: (steamId) => api.get(`/playtime/user/${steamId}`),
